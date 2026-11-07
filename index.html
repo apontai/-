@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Apontamentos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Apontamentos">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon/icon-180.png">
+<style>
+:root{--bg:#f1f4f3;--card:#fff;--text:#14201d;--muted:#6b7b76;--line:#c9d4d0;--grid:#9fb0aa;--brand:#0f766e;--brand-t:#fff;--danger:#c0392b;--zebra:#f6f9f8;--gut:#e7eeec;--shadow:0 2px 10px rgba(0,0,0,.08);color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1514;--card:#16201e;--text:#e8f0ee;--muted:#93a6a1;--line:#2b3a35;--grid:#47605a;--brand:#ffd000;--brand-t:#06201c;--danger:#ff7b6b;--zebra:#1a2623;--gut:#101a18;--shadow:0 2px 10px rgba(0,0,0,.4);color-scheme:dark}}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 50px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:110px;overscroll-behavior-y:contain}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{padding:14px 12px 10px;max-width:760px;margin:0 auto}
+h1{font-size:24px;margin:0;letter-spacing:-.4px}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+main{padding:0 8px;max-width:760px;margin:0 auto}
+.tbl{--card:#fff;--text:#14201d;--muted:#5f6f6a;--line:#c9d4d0;--grid:#9fb0aa;--zebra:#eef4f2;--gut:#e3ebe8;--danger:#c0392b;color-scheme:light;background:var(--card);border:1.5px solid var(--grid);border-radius:14px;box-shadow:var(--shadow);overflow:clip}
+.r{display:grid;grid-template-columns:30px repeat(5,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.r:last-child{border-bottom:0}
+.r:nth-child(even):not(.h){background:var(--zebra)}
+.h{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--brand);border-bottom:0}
+.hc{display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.35);min-width:0}
+.h textarea{font:700 12px/1.25 system-ui,sans-serif;color:var(--brand-t);background:transparent;padding:12px 4px;text-align:center;text-transform:uppercase;letter-spacing:.3px;box-shadow:none}
+.hc:focus-within{background:rgba(255,255,255,.2)}
+.h textarea:focus{background:transparent;box-shadow:none}
+.h .g{background:transparent;color:var(--brand-t)}
+.g{background:var(--gut);border:0;border-right:1px solid var(--grid);color:var(--muted);font:600 11px system-ui,sans-serif;padding:0;display:flex;align-items:flex-start;justify-content:center;padding-top:11px}
+.g.armed{background:var(--danger);color:#fff;font-size:16px;padding-top:7px}
+.c{display:flex;border-left:1px solid var(--line);min-width:0}
+.c:nth-child(2){border-left:0}
+textarea{font:inherit;font-size:15px;line-height:1.25;color:var(--text);background:transparent;border:0;border-radius:0;padding:9px 5px;width:100%;min-width:0;resize:none;outline:none;overflow:hidden;display:block}
+textarea:focus{background:#e2f3f0;box-shadow:inset 0 0 0 2px #0f766e}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.bar button{border:0;border-radius:16px;height:56px;font:700 17px system-ui,sans-serif}
+#add{flex:1;background:var(--brand);color:var(--brand-t);box-shadow:var(--shadow)}
+#exp{background:var(--card);color:var(--text);border:1.5px solid var(--line);padding:0 18px}
+button:active{transform:scale(.97)}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Apontamentos</h1>
+  <div class="sub" id="count"></div>
+</header>
+<main>
+  <div class="tbl" id="tbl"></div>
+</main>
+<div class="bar">
+  <button id="add">＋ Nova linha</button>
+  <button id="exp">⬇ XLSX</button>
+</div>
+<div id="toast"></div>
+<script>
+(function(){
+"use strict";
+var KEY="apontamentos:v1";
+var DEF=["Hora início","Hora final","Qtd colaboradores","Cod","Descrição"];
+var OLD="Data|Local|Descrição|Qtd|Obs";
+var storageOk=true;
+var state={cols:DEF.slice(),rows:[]};
+
+/* ---------- Salvamento ---------- */
+function load(){
+  try{var s=localStorage.getItem(KEY);if(s){var p=JSON.parse(s);if(p&&p.cols&&p.rows)state=p}}catch(e){storageOk=false}
+  if(state.cols.slice(0,5).join("|")===OLD)state.cols=DEF.slice();
+  while(state.cols.length<5)state.cols.push("Coluna "+(state.cols.length+1));
+}
+var t=null;
+function save(now){
+  clearTimeout(t);
+  var go=function(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){storageOk=false}};
+  if(now)go();else t=setTimeout(go,250);
+}
+window.addEventListener("pagehide",function(){save(true)});
+document.addEventListener("visibilitychange",function(){if(document.hidden)save(true)});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+
+/* ---------- Gerador de XLSX (sem bibliotecas, funciona offline) ---------- */
+var CRC=(function(){var t=[],c,n,k;for(n=0;n<256;n++){c=n;for(k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){var c=0xFFFFFFFF;for(var i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zip(files){
+  var enc=new TextEncoder(),parts=[],cen=[],off=0,cenSize=0;
+  files.forEach(function(f){
+    var name=enc.encode(f.name),data=enc.encode(f.text),crc=crc32(data);
+    var l=new Uint8Array(30+name.length),v=new DataView(l.buffer);
+    v.setUint32(0,0x04034b50,true);v.setUint16(4,20,true);v.setUint16(6,0x0800,true);
+    v.setUint16(12,0x21,true);v.setUint32(14,crc,true);v.setUint32(18,data.length,true);
+    v.setUint32(22,data.length,true);v.setUint16(26,name.length,true);l.set(name,30);
+    var c=new Uint8Array(46+name.length),w=new DataView(c.buffer);
+    w.setUint32(0,0x02014b50,true);w.setUint16(4,20,true);w.setUint16(6,20,true);w.setUint16(8,0x0800,true);
+    w.setUint16(14,0x21,true);w.setUint32(16,crc,true);w.setUint32(20,data.length,true);
+    w.setUint32(24,data.length,true);w.setUint16(28,name.length,true);w.setUint32(42,off,true);c.set(name,46);
+    parts.push(l,data);cen.push(c);off+=l.length+data.length;cenSize+=c.length;
+  });
+  var end=new Uint8Array(22),e=new DataView(end.buffer);
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);
+  e.setUint32(12,cenSize,true);e.setUint32(16,off,true);
+  return new Blob(parts.concat(cen,[end]),{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+function esc(s){return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function colLetter(i){return String.fromCharCode(65+i)}
+function buildXlsx(header,rows){
+  var all=[header].concat(rows);
+  var sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+   +'<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+   +'<cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="13" customWidth="1"/><col min="3" max="3" width="20" customWidth="1"/><col min="4" max="4" width="12" customWidth="1"/><col min="5" max="5" width="45" customWidth="1"/></cols><sheetData>';
+  all.forEach(function(r,i){
+    sheet+='<row r="'+(i+1)+'">';
+    r.forEach(function(v,j){
+      if(v===""||v==null)return;
+      sheet+='<c r="'+colLetter(j)+(i+1)+'" t="inlineStr"'+(i===0?' s="1"':' s="2"')+'><is><t xml:space="preserve">'+esc(v)+'</t></is></c>';
+    });
+    sheet+='</row>';
+  });
+  sheet+='</sheetData></worksheet>';
+  var NS='http://schemas.openxmlformats.org/';
+  return zip([
+    {name:"[Content_Types].xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="'+NS+'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+    {name:"_rels/.rels",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+NS+'package/2006/relationships"><Relationship Id="rId1" Type="'+NS+'officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+    {name:"xl/workbook.xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="'+NS+'spreadsheetml/2006/main" xmlns:r="'+NS+'officeDocument/2006/relationships"><sheets><sheet name="Apontamentos" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+    {name:"xl/_rels/workbook.xml.rels",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+NS+'package/2006/relationships"><Relationship Id="rId1" Type="'+NS+'officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+NS+'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {name:"xl/styles.xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="'+NS+'spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F766E"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
+    {name:"xl/worksheets/sheet1.xml",text:sheet}
+  ]);
+}
+
+/* ---------- Interface ---------- */
+var $=function(id){return document.getElementById(id)};
+var tbl=$("tbl");
+function toast(m){var e=$("toast");e.textContent=m;e.className="show";clearTimeout(toast.t);toast.t=setTimeout(function(){e.className=""},2600)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function blank(){return{id:uid(),v:["","","","",""]}}
+function growRow(el){
+  var ta=el.querySelectorAll("textarea"),m=0,i;
+  for(i=0;i<ta.length;i++){ta[i].style.height="auto"}
+  for(i=0;i<ta.length;i++){m=Math.max(m,ta[i].scrollHeight)}
+  for(i=0;i<ta.length;i++){ta[i].style.height=m+"px"}
+}
+function growHead(){tbl.querySelectorAll(".h textarea").forEach(function(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"})}
+function growAll(){growHead();tbl.querySelectorAll(".r:not(.h)").forEach(growRow)}
+function header(){
+  var h=document.createElement("div");h.className="r h";
+  var g=document.createElement("div");g.className="g";g.textContent="#";h.appendChild(g);
+  for(var i=0;i<5;i++)(function(i){
+    var w=document.createElement("div");w.className="hc";
+    var inp=document.createElement("textarea");inp.rows=1;inp.value=state.cols[i];inp.maxLength=40;
+    inp.setAttribute("aria-label","Nome da coluna "+(i+1));
+    inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();inp.blur()}});
+    inp.addEventListener("input",function(){state.cols[i]=inp.value||("Coluna "+(i+1));growHead();save()});
+    w.appendChild(inp);h.appendChild(w);
+  })(i);
+  return h;
+}
+function rowEl(r,n){
+  var el=document.createElement("div");el.className="r";el.dataset.id=r.id;
+  var g=document.createElement("button");g.className="g";g.textContent=n;g.setAttribute("aria-label","Excluir linha "+n);
+  g.addEventListener("click",function(){
+    if(!g.classList.contains("armed")){
+      g.classList.add("armed");g.textContent="×";
+      setTimeout(function(){g.classList.remove("armed");g.textContent=n},2500);return;
+    }
+    state.rows=state.rows.filter(function(x){return x.id!==r.id});save(true);render();
+  });
+  el.appendChild(g);
+  for(var i=0;i<5;i++)(function(i){
+    var c=document.createElement("div");c.className="c";
+    var ta=document.createElement("textarea");ta.rows=1;ta.value=r.v[i]||"";
+    ta.setAttribute("aria-label",state.cols[i]+", linha "+n);
+    ta.addEventListener("input",function(){r.v[i]=ta.value;growRow(el);save()});
+    c.appendChild(ta);el.appendChild(c);
+  })(i);
+  return el;
+}
+function render(){
+  tbl.innerHTML="";
+  tbl.appendChild(header());
+  state.rows.forEach(function(r,k){tbl.appendChild(rowEl(r,k+1))});
+  growAll();
+  $("count").textContent=state.rows.length+(state.rows.length===1?" linha":" linhas")+" · toque no título da coluna para renomear"+(storageOk?"":" · salvamento indisponível");
+}
+window.addEventListener("resize",growAll);
+$("add").addEventListener("click",function(){
+  var r=blank();state.rows.push(r);save(true);render();
+  var el=tbl.querySelector('[data-id="'+r.id+'"]');
+  if(el){el.scrollIntoView({behavior:"smooth",block:"center"});var f=el.querySelector("textarea");if(f)setTimeout(function(){f.focus({preventScroll:true})},250)}
+});
+$("exp").addEventListener("click",function(){
+  var rows=state.rows.filter(function(r){return r.v.some(function(x){return String(x).trim()})});
+  if(!rows.length){toast("Nada para exportar ainda");return}
+  try{
+    var blob=buildXlsx(state.cols.slice(0,5),rows.map(function(r){return r.v}));
+    var d=new Date(),p=function(n){return String(n).padStart(2,"0")};
+    var name="apontamentos-"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+".xlsx";
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},10000);
+    toast("Planilha exportada");
+  }catch(e){toast("Não foi possível exportar")}
+});
+var fresh=true;try{fresh=!localStorage.getItem(KEY)}catch(e){}
+load();
+if(fresh&&!state.rows.length){for(var k=0;k<5;k++)state.rows.push(blank());save(true)}
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+}
+})();
+</script>
+</body>
+</html>
