@@ -1,7 +1,7 @@
 // Service worker: deixa o app funcionar offline.
 // Ao alterar qualquer arquivo, mude o número da versão abaixo.
-const CACHE = "apontamentos-v6";
-const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon/icon-180.png", "./icon/icon-192.png", "./icon/icon-512.png"];
+const CACHE = "apontamentos-v7";
+const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-180.png", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
