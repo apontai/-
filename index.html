@@ -17,7 +17,7 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 @media (prefers-color-scheme:dark){:root{--bg:#0e1514;--card:#16201e;--text:#e8f0ee;--muted:#93a6a1;--line:#2b3a35;--grid:#47605a;--brand:#ffd000;--brand-t:#06201c;--danger:#ff7b6b;--zebra:#1a2623;--gut:#101a18;--shadow:0 2px 10px rgba(0,0,0,.4);color-scheme:dark}}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 50px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:110px;overscroll-behavior-y:contain}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:120px;overscroll-behavior-y:contain}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
 header{padding:14px 12px 10px;max-width:760px;margin:0 auto}
 h1{font-size:24px;margin:0;letter-spacing:-.4px}
@@ -39,13 +39,23 @@ main{padding:0 8px;max-width:760px;margin:0 auto}
 .c:nth-child(2){border-left:0}
 textarea{font:inherit;font-size:15px;line-height:1.25;color:var(--text);background:transparent;border:0;border-radius:0;padding:9px 5px;width:100%;min-width:0;resize:none;outline:none;overflow:hidden;display:block}
 textarea:focus{background:#e2f3f0;box-shadow:inset 0 0 0 2px #0f766e}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar{display:flex;align-items:center;gap:6px;padding:8px 10px 0;max-width:760px;margin:0 auto}
+.tabs{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;position:relative;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;max-width:150px;height:34px;padding:0 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:600 14px system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab.on{background:var(--brand);border-color:var(--brand);color:var(--brand-t)}
+input.tab{width:130px;font-size:16px;outline:none;text-overflow:clip;cursor:text}
+.pbtn{flex:0 0 auto;width:34px;height:34px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:700 16px system-ui,sans-serif;padding:0}
+.pbtn.armed{background:var(--danger);border-color:var(--danger);color:#fff}
+.bar{display:flex;gap:8px;padding:8px 10px;max-width:760px;margin:0 auto}
 .bar button[hidden]{display:none}
-.bar button{border:0;border-radius:16px;height:56px;font:700 17px system-ui,sans-serif}
-#add{flex:1;background:var(--brand);color:var(--brand-t);box-shadow:var(--shadow)}
-#exp{background:var(--card);color:var(--text);border:1.5px solid var(--line);padding:0 18px}
+.bar button{border:0;border-radius:12px;height:40px;padding:0 16px;font:700 15px system-ui,sans-serif}
+#add{background:var(--brand);color:var(--brand-t);box-shadow:var(--shadow)}
+#exp,#inst{background:var(--card);color:var(--text);border:1.5px solid var(--line)}
+#exp{margin-left:auto}
 button:active{transform:scale(.97)}
-#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
@@ -57,26 +67,57 @@ button:active{transform:scale(.97)}
 <main>
   <div class="tbl" id="tbl"></div>
 </main>
-<div class="bar">
-  <button id="add">＋ Nova linha</button>
-  <button id="exp">⬇ XLSX</button>
-  <button id="inst" hidden>⬇ Instalar</button>
+<div class="dock">
+  <div class="tabbar">
+    <div class="tabs" id="tabs"></div>
+    <button class="pbtn" id="addp" aria-label="Nova página">＋</button>
+    <button class="pbtn" id="delp" aria-label="Excluir página">🗑</button>
+  </div>
+  <div class="bar">
+    <button id="add">＋ Nova linha</button>
+    <button id="exp">⬇ XLSX</button>
+    <button id="inst" hidden>⬇ Instalar</button>
+  </div>
 </div>
 <div id="toast"></div>
 <script>
 (function(){
 "use strict";
-var KEY="apontamentos:v1";
+var KEY="apontamentos:v2",OLDKEY="apontamentos:v1";
 var DEF=["Hora início","Hora final","Qtd colaboradores","Cod","Descrição"];
 var OLD="Data|Local|Descrição|Qtd|Obs";
 var storageOk=true;
-var state={cols:DEF.slice(),rows:[]};
+var state={pages:[],active:null},renaming=null;
 
 /* ---------- Salvamento ---------- */
+function newPage(name,cols,n){
+  var p={id:uid(),name:name,cols:(cols||DEF).slice(0,5),rows:[]};
+  for(var i=0;i<(n||0);i++)p.rows.push(blank());
+  return p;
+}
+function fix(p){
+  if(!p.id)p.id=uid();
+  if(!p.name)p.name="Página";
+  if(!p.cols)p.cols=DEF.slice();
+  if(p.cols.slice(0,5).join("|")===OLD)p.cols=DEF.slice();
+  while(p.cols.length<5)p.cols.push("Coluna "+(p.cols.length+1));
+  if(!p.rows)p.rows=[];
+  return p;
+}
+function cur(){
+  for(var i=0;i<state.pages.length;i++)if(state.pages[i].id===state.active)return state.pages[i];
+  return state.pages[0];
+}
 function load(){
-  try{var s=localStorage.getItem(KEY);if(s){var p=JSON.parse(s);if(p&&p.cols&&p.rows)state=p}}catch(e){storageOk=false}
-  if(state.cols.slice(0,5).join("|")===OLD)state.cols=DEF.slice();
-  while(state.cols.length<5)state.cols.push("Coluna "+(state.cols.length+1));
+  var p=null;
+  try{
+    var s=localStorage.getItem(KEY)||localStorage.getItem(OLDKEY); /* v1 = dados da versão sem páginas */
+    if(s)p=JSON.parse(s);
+  }catch(e){storageOk=false}
+  if(p&&p.pages&&p.pages.length){state.pages=p.pages.map(fix);state.active=p.active}
+  else if(p&&p.cols&&p.rows){state.pages=[fix({name:"Página 1",cols:p.cols,rows:p.rows})]}
+  if(!state.pages.length)state.pages=[newPage("Página 1",DEF,5)];
+  if(!state.pages.some(function(x){return x.id===state.active}))state.active=state.pages[0].id;
 }
 var t=null;
 function save(now){
@@ -112,7 +153,7 @@ function zip(files){
 }
 function esc(s){return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function colLetter(i){return String.fromCharCode(65+i)}
-function buildXlsx(header,rows){
+function sheetXml(header,rows){
   var all=[header].concat(rows);
   var sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
    +'<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
@@ -126,15 +167,32 @@ function buildXlsx(header,rows){
     sheet+='</row>';
   });
   sheet+='</sheetData></worksheet>';
-  var NS='http://schemas.openxmlformats.org/';
+  return sheet;
+}
+function sheetName(s,used){
+  var n=String(s||"").replace(/[\\\/\?\*\[\]:]/g,"-").replace(/^'+|'+$/g,"").trim().slice(0,31)||"Página";
+  var base=n,k=2;
+  while(used[n.toLowerCase()]){var suf=" ("+k+")";n=base.slice(0,31-suf.length)+suf;k++}
+  used[n.toLowerCase()]=1;
+  return n;
+}
+function buildXlsx(sheets){
+  var NS='http://schemas.openxmlformats.org/',used={},ct="",wb="",rel="",files=[];
+  sheets.forEach(function(sh,i){
+    var n=i+1;
+    ct+='<Override PartName="/xl/worksheets/sheet'+n+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+    wb+='<sheet name="'+esc(sheetName(sh.name,used)).replace(/"/g,"&quot;")+'" sheetId="'+n+'" r:id="rId'+n+'"/>';
+    rel+='<Relationship Id="rId'+n+'" Type="'+NS+'officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+n+'.xml"/>';
+    files.push({name:"xl/worksheets/sheet"+n+".xml",text:sheetXml(sh.header,sh.rows)});
+  });
+  rel+='<Relationship Id="rId'+(sheets.length+1)+'" Type="'+NS+'officeDocument/2006/relationships/styles" Target="styles.xml"/>';
   return zip([
-    {name:"[Content_Types].xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="'+NS+'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+    {name:"[Content_Types].xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="'+NS+'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ct+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
     {name:"_rels/.rels",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+NS+'package/2006/relationships"><Relationship Id="rId1" Type="'+NS+'officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
-    {name:"xl/workbook.xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="'+NS+'spreadsheetml/2006/main" xmlns:r="'+NS+'officeDocument/2006/relationships"><sheets><sheet name="Apontamentos" sheetId="1" r:id="rId1"/></sheets></workbook>'},
-    {name:"xl/_rels/workbook.xml.rels",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+NS+'package/2006/relationships"><Relationship Id="rId1" Type="'+NS+'officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+NS+'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {name:"xl/workbook.xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="'+NS+'spreadsheetml/2006/main" xmlns:r="'+NS+'officeDocument/2006/relationships"><sheets>'+wb+'</sheets></workbook>'},
+    {name:"xl/_rels/workbook.xml.rels",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="'+NS+'package/2006/relationships">'+rel+'</Relationships>'},
     {name:"xl/styles.xml",text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="'+NS+'spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F766E"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
-    {name:"xl/worksheets/sheet1.xml",text:sheet}
-  ]);
+  ].concat(files));
 }
 
 /* ---------- Interface ---------- */
@@ -152,56 +210,123 @@ function growRow(el){
 function growHead(){tbl.querySelectorAll(".h textarea").forEach(function(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"})}
 function growAll(){growHead();tbl.querySelectorAll(".r:not(.h)").forEach(growRow)}
 function header(){
-  var h=document.createElement("div");h.className="r h";
+  var pg=cur(),h=document.createElement("div");h.className="r h";
   var g=document.createElement("div");g.className="g";g.textContent="#";h.appendChild(g);
   for(var i=0;i<5;i++)(function(i){
     var w=document.createElement("div");w.className="hc";
-    var inp=document.createElement("textarea");inp.rows=1;inp.value=state.cols[i];inp.maxLength=40;
+    var inp=document.createElement("textarea");inp.rows=1;inp.value=pg.cols[i];inp.maxLength=40;
     inp.setAttribute("aria-label","Nome da coluna "+(i+1));
     inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();inp.blur()}});
-    inp.addEventListener("input",function(){state.cols[i]=inp.value||("Coluna "+(i+1));growHead();save()});
+    inp.addEventListener("input",function(){pg.cols[i]=inp.value||("Coluna "+(i+1));growHead();save()});
     w.appendChild(inp);h.appendChild(w);
   })(i);
   return h;
 }
 function rowEl(r,n){
-  var el=document.createElement("div");el.className="r";el.dataset.id=r.id;
+  var pg=cur(),el=document.createElement("div");el.className="r";el.dataset.id=r.id;
   var g=document.createElement("button");g.className="g";g.textContent=n;g.setAttribute("aria-label","Excluir linha "+n);
   g.addEventListener("click",function(){
     if(!g.classList.contains("armed")){
       g.classList.add("armed");g.textContent="×";
       setTimeout(function(){g.classList.remove("armed");g.textContent=n},2500);return;
     }
-    state.rows=state.rows.filter(function(x){return x.id!==r.id});save(true);render();
+    pg.rows=pg.rows.filter(function(x){return x.id!==r.id});save(true);render();
   });
   el.appendChild(g);
   for(var i=0;i<5;i++)(function(i){
     var c=document.createElement("div");c.className="c";
     var ta=document.createElement("textarea");ta.rows=1;ta.value=r.v[i]||"";
-    ta.setAttribute("aria-label",state.cols[i]+", linha "+n);
+    ta.setAttribute("aria-label",pg.cols[i]+", linha "+n);
     ta.addEventListener("input",function(){r.v[i]=ta.value;growRow(el);save()});
     c.appendChild(ta);el.appendChild(c);
   })(i);
   return el;
 }
 function render(){
+  var pg=cur();
   tbl.innerHTML="";
   tbl.appendChild(header());
-  state.rows.forEach(function(r,k){tbl.appendChild(rowEl(r,k+1))});
+  pg.rows.forEach(function(r,k){tbl.appendChild(rowEl(r,k+1))});
   growAll();
-  $("count").textContent=state.rows.length+(state.rows.length===1?" linha":" linhas")+" · toque no título da coluna para renomear"+(storageOk?"":" · salvamento indisponível");
+  $("count").textContent=pg.rows.length+(pg.rows.length===1?" linha":" linhas")+" · toque no título da coluna para renomear"+(storageOk?"":" · salvamento indisponível");
+  renderTabs();
 }
+
+/* ---------- Páginas (abas) ---------- */
+var tabs=$("tabs"),delp=$("delp"),delArmed=false,delT=null;
+function disarm(){clearTimeout(delT);delArmed=false;delp.classList.remove("armed");delp.textContent="🗑"}
+function renderTabs(){
+  tabs.innerHTML="";
+  state.pages.forEach(function(p){
+    if(renaming===p.id){
+      var inp=document.createElement("input");inp.className="tab on";inp.value=p.name;inp.maxLength=24;
+      inp.setAttribute("aria-label","Nome da página");
+      var done=false;
+      var finish=function(ok){
+        if(done)return;done=true;
+        var v=inp.value.trim();
+        if(ok&&v)p.name=v;
+        renaming=null;save(true);renderTabs();
+      };
+      inp.addEventListener("keydown",function(e){
+        if(e.key==="Enter"){e.preventDefault();finish(true)}
+        else if(e.key==="Escape"){finish(false)}
+      });
+      inp.addEventListener("blur",function(){finish(true)});
+      tabs.appendChild(inp);
+      inp.focus();inp.select();
+    }else{
+      var on=p.id===state.active;
+      var b=document.createElement("button");b.className="tab"+(on?" on":"");b.textContent=p.name;
+      b.setAttribute("aria-label","Página "+p.name+(on?", toque para renomear":""));
+      b.addEventListener("click",function(){
+        if(on){renaming=p.id;renderTabs();return}
+        state.active=p.id;renaming=null;disarm();save(true);render();window.scrollTo(0,0);
+      });
+      tabs.appendChild(b);
+    }
+  });
+  var a=tabs.querySelector(".on");
+  if(a){
+    var l=a.offsetLeft,r=l+a.offsetWidth;
+    if(l<tabs.scrollLeft)tabs.scrollLeft=l-8;
+    else if(r>tabs.scrollLeft+tabs.clientWidth)tabs.scrollLeft=r-tabs.clientWidth+8;
+  }
+}
+$("addp").addEventListener("click",function(){
+  var names={},n=state.pages.length+1;
+  state.pages.forEach(function(p){names[p.name.toLowerCase()]=1});
+  while(names["página "+n])n++;
+  var p=newPage("Página "+n,cur().cols,5); /* herda os nomes das colunas da página atual */
+  state.pages.push(p);state.active=p.id;renaming=null;disarm();save(true);render();window.scrollTo(0,0);
+});
+delp.addEventListener("click",function(){
+  if(!delArmed){
+    if(state.pages.length<2){toast("Precisa ter pelo menos uma página");return}
+    delArmed=true;delp.classList.add("armed");delp.textContent="×";
+    delT=setTimeout(disarm,2500);return;
+  }
+  var i=0;
+  while(i<state.pages.length&&state.pages[i].id!==state.active)i++;
+  state.pages.splice(i,1);
+  state.active=state.pages[Math.max(0,i-1)].id;
+  renaming=null;disarm();save(true);render();window.scrollTo(0,0);toast("Página excluída");
+});
 window.addEventListener("resize",growAll);
 $("add").addEventListener("click",function(){
-  var r=blank();state.rows.push(r);save(true);render();
+  var r=blank();cur().rows.push(r);save(true);render();
   var el=tbl.querySelector('[data-id="'+r.id+'"]');
   if(el){el.scrollIntoView({behavior:"smooth",block:"center"});var f=el.querySelector("textarea");if(f)setTimeout(function(){f.focus({preventScroll:true})},250)}
 });
 $("exp").addEventListener("click",function(){
-  var rows=state.rows.filter(function(r){return r.v.some(function(x){return String(x).trim()})});
-  if(!rows.length){toast("Nada para exportar ainda");return}
+  var sheets=[];
+  state.pages.forEach(function(p){
+    var rows=p.rows.filter(function(r){return r.v.some(function(x){return String(x).trim()})});
+    if(rows.length)sheets.push({name:p.name,header:p.cols.slice(0,5),rows:rows.map(function(r){return r.v})});
+  });
+  if(!sheets.length){toast("Nada para exportar ainda");return}
   try{
-    var blob=buildXlsx(state.cols.slice(0,5),rows.map(function(r){return r.v}));
+    var blob=buildXlsx(sheets);
     var d=new Date(),p=function(n){return String(n).padStart(2,"0")};
     var name="apontamentos-"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+".xlsx";
     var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
@@ -210,9 +335,7 @@ $("exp").addEventListener("click",function(){
     toast("Planilha exportada");
   }catch(e){toast("Não foi possível exportar")}
 });
-var fresh=true;try{fresh=!localStorage.getItem(KEY)}catch(e){}
-load();
-if(fresh&&!state.rows.length){for(var k=0;k<5;k++)state.rows.push(blank());save(true)}
+load();save(true);
 render();
 
 var deferred=null,inst=document.getElementById("inst");
