@@ -319,12 +319,10 @@ $("add").addEventListener("click",function(){
   if(el){el.scrollIntoView({behavior:"smooth",block:"center"});var f=el.querySelector("textarea");if(f)setTimeout(function(){f.focus({preventScroll:true})},250)}
 });
 $("exp").addEventListener("click",function(){
-  var sheets=[];
-  state.pages.forEach(function(p){
-    var rows=p.rows.filter(function(r){return r.v.some(function(x){return String(x).trim()})});
-    if(rows.length)sheets.push({name:p.name,header:p.cols.slice(0,5),rows:rows.map(function(r){return r.v})});
-  });
-  if(!sheets.length){toast("Nada para exportar ainda");return}
+  var pg=cur(),sheets=[];
+  var rows=pg.rows.filter(function(r){return r.v.some(function(x){return String(x).trim()})});
+  if(rows.length)sheets.push({name:pg.name,header:pg.cols.slice(0,5),rows:rows.map(function(r){return r.v})});
+  if(!sheets.length){toast("Nada para exportar nesta página");return}
   try{
     var blob=buildXlsx(sheets);
     var d=new Date(),p=function(n){return String(n).padStart(2,"0")};
