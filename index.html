@@ -48,14 +48,17 @@ textarea:focus{background:#e2f3f0;box-shadow:inset 0 0 0 2px #0f766e}
 input.tab{width:130px;font-size:16px;outline:none;text-overflow:clip;cursor:text}
 .pbtn{flex:0 0 auto;width:34px;height:34px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:700 16px system-ui,sans-serif;padding:0}
 .pbtn.armed{background:var(--danger);border-color:var(--danger);color:#fff}
-.bar{display:flex;gap:8px;padding:8px 10px;max-width:760px;margin:0 auto}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:8px 10px;max-width:760px;margin:0 auto}
 .bar button[hidden]{display:none}
 .bar button{border:0;border-radius:12px;height:40px;padding:0 16px;font:700 15px system-ui,sans-serif}
 #add{background:var(--brand);color:var(--brand-t);box-shadow:var(--shadow)}
 #exp,#inst{background:var(--card);color:var(--text);border:1.5px solid var(--line)}
+#undo,#redo{width:40px;padding:0;background:var(--card);color:var(--text);border:1.5px solid var(--line);font-size:20px;line-height:1}
+.bar button:disabled{opacity:.35}
+.bar button:disabled:active{transform:none}
 #exp{margin-left:auto}
 button:active{transform:scale(.97)}
-#toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(var(--dockh,100px) + 12px);transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
@@ -75,6 +78,8 @@ button:active{transform:scale(.97)}
   </div>
   <div class="bar">
     <button id="add">＋ Nova linha</button>
+    <button id="undo" aria-label="Desfazer exclusão" title="Desfazer" disabled>↶</button>
+    <button id="redo" aria-label="Refazer exclusão" title="Refazer" disabled>↷</button>
     <button id="exp">⬇ XLSX</button>
     <button id="inst" hidden>⬇ Instalar</button>
   </div>
@@ -230,7 +235,7 @@ function rowEl(r,n){
       g.classList.add("armed");g.textContent="×";
       setTimeout(function(){g.classList.remove("armed");g.textContent=n},2500);return;
     }
-    pg.rows=pg.rows.filter(function(x){return x.id!==r.id});save(true);render();
+    var at=idxOf(pg.rows,r.id);if(at<0)return;pg.rows.splice(at,1);pushOp({t:"row",pid:pg.id,i:at,row:r});save(true);render();
   });
   el.appendChild(g);
   for(var i=0;i<5;i++)(function(i){
@@ -293,6 +298,49 @@ function renderTabs(){
     else if(r>tabs.scrollLeft+tabs.clientWidth)tabs.scrollLeft=r-tabs.clientWidth+8;
   }
 }
+/* ---------- Desfazer / Refazer (exclusões de linhas e páginas) ---------- */
+var undoS=[],redoS=[];
+function idxOf(arr,id){for(var i=0;i<arr.length;i++)if(arr[i].id===id)return i;return -1}
+function histBtns(){$("undo").disabled=!undoS.length;$("redo").disabled=!redoS.length}
+function pushOp(op){undoS.push(op);if(undoS.length>50)undoS.shift();redoS=[];histBtns()}
+function pageById(id){var i=idxOf(state.pages,id);return i<0?null:state.pages[i]}
+function undoOp(op){
+  if(op.t==="row"){
+    var pg=pageById(op.pid);if(!pg)return false;
+    pg.rows.splice(Math.min(op.i,pg.rows.length),0,op.row);state.active=pg.id;
+  }else{
+    state.pages.splice(Math.min(op.i,state.pages.length),0,op.page);state.active=op.page.id;
+  }
+  return true;
+}
+function redoOp(op){
+  if(op.t==="row"){
+    var pg=pageById(op.pid);if(!pg)return false;
+    var at=idxOf(pg.rows,op.row.id);if(at<0)return false;
+    pg.rows.splice(at,1);state.active=pg.id;
+  }else{
+    var i=idxOf(state.pages,op.page.id);if(i<0||state.pages.length<2)return false;
+    state.pages.splice(i,1);state.active=state.pages[Math.max(0,i-1)].id;
+  }
+  return true;
+}
+function stepHistory(from,to,fn,msg){
+  var op=from.pop();if(!op)return;
+  if(!fn(op)){histBtns();toast("Não foi possível");return}
+  to.push(op);histBtns();renaming=null;disarm();save(true);render();
+  toast(msg+(op.t==="row"?"linha":"página"));
+}
+$("undo").addEventListener("click",function(){stepHistory(undoS,redoS,undoOp,"Restaurada: ")});
+$("redo").addEventListener("click",function(){stepHistory(redoS,undoS,redoOp,"Excluída de novo: ")});
+var dock=document.querySelector(".dock");
+function dockSize(){
+  var h=dock.offsetHeight;
+  document.documentElement.style.setProperty("--dockh",h+"px");
+  document.body.style.paddingBottom=(h+16)+"px";
+}
+if(window.ResizeObserver)new ResizeObserver(dockSize).observe(dock);
+window.addEventListener("resize",dockSize);
+
 $("addp").addEventListener("click",function(){
   var names={},n=state.pages.length+1;
   state.pages.forEach(function(p){names[p.name.toLowerCase()]=1});
@@ -308,7 +356,8 @@ delp.addEventListener("click",function(){
   }
   var i=0;
   while(i<state.pages.length&&state.pages[i].id!==state.active)i++;
-  state.pages.splice(i,1);
+  var gone=state.pages.splice(i,1)[0];
+  pushOp({t:"page",i:i,page:gone});
   state.active=state.pages[Math.max(0,i-1)].id;
   renaming=null;disarm();save(true);render();window.scrollTo(0,0);toast("Página excluída");
 });
@@ -334,7 +383,7 @@ $("exp").addEventListener("click",function(){
   }catch(e){toast("Não foi possível exportar")}
 });
 load();save(true);
-render();
+render();histBtns();dockSize();
 
 var deferred=null,inst=document.getElementById("inst");
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;inst.hidden=false});
