@@ -325,11 +325,14 @@ function rowEl(r,n){
   return el;
 }
 function render(){
-  var pg=cur();
+  var pg=cur(),y=window.scrollY;
+  tbl.style.minHeight=tbl.offsetHeight+"px"; /* evita a página encolher e o navegador jogar a rolagem para o topo */
   tbl.innerHTML="";
   tbl.appendChild(header());
   pg.rows.forEach(function(r,k){tbl.appendChild(rowEl(r,k+1))});
   growAll();
+  tbl.style.minHeight="";
+  window.scrollTo(0,y);
   $("count").textContent=pg.rows.length+(pg.rows.length===1?" linha":" linhas")+" · arraste o nº para mover · toque no título para renomear"+(storageOk?"":" · salvamento indisponível");
   renderTabs();
 }
