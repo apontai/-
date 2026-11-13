@@ -12,9 +12,9 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
 <style>
-:root{--bg:#f2f3f4;--card:#fff;--text:#1b1f23;--muted:#6b7279;--line:#d0d4d8;--grid:#a4abb2;--brand:#ad5c1a;--brand-t:#fff;--danger:#c0392b;--zebra:#f7f8f9;--gut:#e8eaec;--shadow:0 2px 10px rgba(0,0,0,.08);color-scheme:light;
+:root{--bg:#d9dce0;--card:#fff;--text:#1b1f23;--muted:#555c64;--line:#d0d4d8;--grid:#a4abb2;--brand:#ad5c1a;--brand-t:#fff;--danger:#c0392b;--zebra:#f7f8f9;--gut:#e8eaec;--shadow:0 2px 10px rgba(0,0,0,.08);color-scheme:light;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root{--bg:#202328;--card:#2a2e34;--text:#eceef0;--muted:#9aa1a9;--line:#3b4047;--grid:#575e66;--brand:#e8964a;--brand-t:#1c1006;--danger:#ff7b6b;--zebra:#2f343a;--gut:#25282d;--shadow:0 2px 10px rgba(0,0,0,.4);color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--card:#1e2125;--text:#eceef0;--muted:#9aa1a9;--line:#33383e;--grid:#575e66;--brand:#e8964a;--brand-t:#1c1006;--danger:#ff7b6b;--zebra:#2f343a;--gut:#25282d;--shadow:0 2px 10px rgba(0,0,0,.4);color-scheme:dark}}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 50px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:120px;overscroll-behavior-y:contain;display:flex;flex-direction:column;min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
@@ -87,9 +87,51 @@ button:active{transform:scale(.97)}
 .sh-b input{height:46px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--text);font:16px system-ui,sans-serif;outline:none}
 .sh-b input:focus{border-color:var(--brand)}
 .sh-d.err{color:var(--danger)}
+/* ---------- Animação de abertura ---------- */
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#22262b,#16181c 55%,#0c0d0f);animation:sp-out .45s ease 2.3s forwards}
+#splash svg{width:min(82vw,82vh,460px);height:auto;overflow:visible;animation:sp-in .75s cubic-bezier(.2,.9,.3,1.25) both}
+#splash .sp-min,#splash .sp-hr{transform-box:view-box;transform-origin:168px 250px}
+#splash .sp-min{animation:sp-min 1.7s cubic-bezier(.3,0,.2,1) .15s both}
+#splash .sp-hr{animation:sp-hr 1.7s cubic-bezier(.3,0,.2,1) .15s both}
+#splash .sp-hand{animation:sp-hand .7s cubic-bezier(.2,.9,.3,1.15) .45s both}
+#splash .sp-name{animation:sp-name .6s cubic-bezier(.2,.8,.3,1) .95s both}
+@keyframes sp-name{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes sp-in{from{transform:scale(.25);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sp-min{from{transform:rotate(-1080deg)}to{transform:rotate(0)}}
+@keyframes sp-hr{from{transform:rotate(-360deg)}to{transform:rotate(0)}}
+@keyframes sp-hand{from{transform:translate(170px,24px);opacity:0}to{transform:translate(0,0);opacity:1}}
+@keyframes sp-out{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){#splash,#splash *{animation-duration:.01s!important;animation-delay:0s!important}#splash{animation:sp-out .3s ease .8s forwards!important}}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+<svg viewBox="0 96 512 350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="spRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a55e"/><stop offset=".5" stop-color="#e8964a"/><stop offset="1" stop-color="#ad5c1a"/></linearGradient>
+    <linearGradient id="spHand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#eceef0"/><stop offset="1" stop-color="#aab1b9"/></linearGradient>
+    <radialGradient id="spFace" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#2f343a"/><stop offset="1" stop-color="#1b1e22"/></radialGradient>
+  </defs>
+  <circle cx="168" cy="250" r="122" fill="url(#spFace)" stroke="url(#spRing)" stroke-width="30"/>
+  <path d="M168 158v18M168 324v18M76 250h18" stroke="#e8964a" stroke-width="12" stroke-linecap="round"/>
+  <path class="sp-hr" d="M168 250L120 222" stroke="#eceef0" stroke-width="17" stroke-linecap="round"/>
+  <path class="sp-min" d="M168 250V184" stroke="#eceef0" stroke-width="17" stroke-linecap="round"/>
+  <circle cx="168" cy="250" r="11" fill="#e8964a"/>
+  <g class="sp-hand">
+    <g transform="translate(206 262) rotate(8) scale(.98)" stroke="#1b1e22" stroke-width="9" stroke-linejoin="round" paint-order="stroke">
+      <rect x="236" y="-34" width="54" height="150" rx="12" fill="url(#spRing)"/>
+      <path d="M150 -52h62a34 34 0 0 1 34 34v96a50 50 0 0 1-50 50h-46z" fill="url(#spHand)"/>
+      <rect x="96" y="20" width="96" height="40" rx="20" fill="url(#spHand)"/>
+      <rect x="106" y="56" width="86" height="38" rx="19" fill="url(#spHand)"/>
+      <rect x="118" y="90" width="74" height="36" rx="18" fill="url(#spHand)"/>
+      <rect x="0" y="-22" width="200" height="44" rx="22" fill="url(#spHand)"/>
+      <path d="M118 -40a20 20 0 0 1 20-20h52a26 26 0 0 1 26 26v8a26 26 0 0 1-26 26h-18a14 14 0 0 1-14-14v-6h-20a20 20 0 0 1-20-20z" fill="url(#spHand)"/>
+    </g>
+  </g>
+  <!-- Nome do app (Poppins Medium convertida em curvas: igual em qualquer aparelho, inclusive offline) -->
+  <g class="sp-name" role="img" aria-label="APONTAÍ"><path fill="#fff" d="M109.8 423.5H102.7L101.5 427H98.6L104.6 410H107.9L113.9 427H111ZM109 421.3 106.2 413.4 103.5 421.3ZM128.3 420.1H125.2V427H122.4V410H128.3Q130.2 410 131.6 410.7Q132.9 411.4 133.6 412.5Q134.3 413.7 134.3 415.1Q134.3 416.4 133.7 417.5Q133 418.7 131.7 419.4Q130.4 420.1 128.3 420.1ZM131.4 415.1Q131.4 412.3 128.3 412.3H125.2V417.9H128.3Q129.9 417.9 130.6 417.1Q131.4 416.4 131.4 415.1ZM141.9 418.5Q141.9 416 143 414Q144.2 412 146.2 410.9Q148.1 409.8 150.5 409.8Q152.9 409.8 154.9 410.9Q156.9 412 158 414Q159.2 416 159.2 418.5Q159.2 421 158 423Q156.9 425 154.9 426.1Q152.9 427.2 150.5 427.2Q148.1 427.2 146.2 426.1Q144.2 425 143 423Q141.9 421 141.9 418.5ZM156.3 418.5Q156.3 416.6 155.6 415.2Q154.8 413.8 153.5 413Q152.2 412.3 150.5 412.3Q148.8 412.3 147.5 413Q146.2 413.8 145.5 415.2Q144.7 416.6 144.7 418.5Q144.7 420.4 145.5 421.8Q146.2 423.2 147.5 424Q148.8 424.8 150.5 424.8Q152.2 424.8 153.5 424Q154.8 423.2 155.6 421.8Q156.3 420.4 156.3 418.5ZM181.7 427H178.9L170.5 414.3V427H167.8V410H170.5L178.9 422.7V410H181.7ZM202.1 410V412.3H197.6V427H194.9V412.3H190.3V410Z"/><path fill="#e8964a" d="M221 423.5H213.9L212.7 427H209.8L215.9 410H219.1L225.2 427H222.2ZM220.2 421.3 217.5 413.4 214.7 421.3ZM236.4 410V427H233.7V410ZM237.6 406.4 232.2 409.1V407L237.6 404Z"/></g>
+</svg>
+</div>
 <header>
   <div class="hrow">
     <div>
@@ -916,6 +958,14 @@ var deferred=null,inst=document.getElementById("inst");
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;inst.hidden=false});
 inst.addEventListener("click",function(){if(!deferred)return;deferred.prompt();deferred.userChoice.then(function(){deferred=null;inst.hidden=true})});
 window.addEventListener("appinstalled",function(){inst.hidden=true});
+
+/* Animação de abertura: some sozinha e sai do caminho (roda a cada carregamento da página) */
+(function(){
+  var sp=document.getElementById("splash");if(!sp)return;
+  var gone=function(){if(sp.parentNode)sp.parentNode.removeChild(sp)};
+  sp.addEventListener("animationend",function(e){if(e.target===sp)gone()});
+  setTimeout(gone,3400);
+})();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
