@@ -120,7 +120,7 @@ footer{opacity:.7;padding-bottom:6px}
 .sh-b button.pri{background:var(--brand)}
 .sh-b input{border:0;border-radius:14px;background:var(--bg);height:50px}
 @media (pointer:coarse),(max-width:760px){#inst{display:none!important}} /* sem botão Instalar no celular */
-#exp{display:flex;align-items:center;gap:8px;padding:0 18px 0 14px}
+#exp{display:flex;align-items:center;gap:8px;padding:0 14px}
 /* ---------- Animação de abertura ---------- */
 #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#22262b,#16181c 55%,#0c0d0f);animation:sp-out .45s ease 2.3s forwards}
 #splash svg{width:min(30vw,30vh,130px);height:auto;overflow:visible;animation:sp-in .75s cubic-bezier(.2,.9,.3,1.25) both}
@@ -192,7 +192,7 @@ footer{opacity:.7;padding-bottom:6px}
     <button id="add">＋ Nova linha</button>
     <button id="undo" aria-label="Desfazer exclusão" title="Desfazer" disabled><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 18c0-6.2-4.2-10.5-9.5-10.5C8 7.5 5.7 8.7 4.2 11"/><path d="M3.6 5.2 4.2 11.2 10 10.2"/></svg></button>
     <button id="redo" aria-label="Refazer exclusão" title="Refazer" disabled><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 18c0-6.2-4.2-10.5-9.5-10.5C8 7.5 5.7 8.7 4.2 11"/><path d="M3.6 5.2 4.2 11.2 10 10.2"/></svg></button>
-    <button id="exp"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/></svg></button>
+    <button id="exp" aria-label="Exportar XLSX" title="Exportar XLSX"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.33h18M3 14.67h18M9 9.33V20M15 9.33V20"/></svg></button>
     <button id="inst" hidden>⬇ Instalar</button>
   </div>
 </div>
